@@ -3,6 +3,7 @@ let anoSelecionado = null;
 let mesSelecionado = null;
 let estacaoSelecionada = null;
 let feriadoSelecionado = null;
+let estadoSelecionado = null;
 
 const nomesMeses = {
     '01': 'Janeiro', '02': 'Fevereiro', '03': 'Março', '04': 'Abril',
@@ -19,6 +20,12 @@ const estacoes = {
 };
 
 const ordemMeses = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+
+// List of Brazilian States
+const estadosBR = [
+    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 
+    'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
 
 document.addEventListener("DOMContentLoaded", inicializarApp);
 
@@ -45,6 +52,7 @@ async function inicializarApp() {
         criarBotoesMes();
         criarBotoesEstacao();
         criarBotoesFeriado();
+        inicializarSeletorEstado();
         await carregarDadosEAtualizarGraficos();
     } catch (error) {
         console.error('Falha ao inicializar a aplicação:', error);
@@ -223,6 +231,22 @@ function criarBotoesFeriado() {
     });
 }
 
+function inicializarSeletorEstado() {
+    const selector = document.getElementById('state-select');
+    
+    estadosBR.forEach(estado => {
+        const option = document.createElement('option');
+        option.value = estado;
+        option.textContent = estado;
+        selector.appendChild(option);
+    });
+
+    selector.addEventListener('change', (e) => {
+        estadoSelecionado = e.target.value;
+        carregarDadosEAtualizarGraficos();
+    });
+}
+
 async function carregarDadosEAtualizarGraficos() {
     if (!anoSelecionado) return;
 
@@ -247,6 +271,12 @@ async function carregarDadosEAtualizarGraficos() {
     } else if (feriadoSelecionado) {
         // Filter for the specific day
         queryParams += `&startDate=${feriadoSelecionado.date}&endDate=${feriadoSelecionado.date}`;
+    }
+
+    if (estadoSelecionado) {
+        queryParams += `&state=${estadoSelecionado}`;
+        titulo += ` - ${estadoSelecionado}`;
+        document.getElementById('main-title').textContent = titulo;
     }
 
     try {

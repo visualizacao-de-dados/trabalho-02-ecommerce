@@ -44,6 +44,7 @@ async function main() {
                     FROM orders o
                     JOIN order_items oi ON o.order_id = oi.order_id
                     JOIN products p ON oi.product_id = p.product_id
+                    JOIN customers c ON o.customer_id = c.customer_id
                     ${whereClause}
                     AND p.product_category_name IS NOT NULL
                     GROUP BY p.product_category_name
@@ -63,7 +64,7 @@ async function main() {
 
         // Helper to build WHERE clause
         function buildWhereClause(req) {
-            const { year, month, months, startDate, endDate } = req.query;
+            const { year, month, months, startDate, endDate, state } = req.query;
             let conditions = ["order_purchase_timestamp IS NOT NULL"];
             
             if (startDate && endDate) {
@@ -88,6 +89,10 @@ async function main() {
                         console.error("Error parsing months:", e);
                     }
                 }
+            }
+
+            if (state) {
+                conditions.push(`customer_state = '${state}'`);
             }
             
             return "WHERE " + conditions.join(" AND ");
@@ -140,8 +145,9 @@ async function main() {
                     SELECT 
                         ${groupBy} as time_period,
                         COUNT(*) as order_count
-                    FROM orders
-                    ${whereClause}
+                    FROM orders o
+                    JOIN customers c ON o.customer_id = c.customer_id
+                    ${whereClause.replace(/order_purchase_timestamp/g, 'o.order_purchase_timestamp')}
                     GROUP BY time_period
                     ORDER BY time_period;
                 `);
@@ -192,6 +198,7 @@ async function main() {
                         COUNT(*) as count
                     FROM payments p
                     JOIN orders o ON p.order_id = o.order_id
+                    JOIN customers c ON o.customer_id = c.customer_id
                     ${whereClause}
                     GROUP BY p.payment_type
                     ORDER BY count DESC;
